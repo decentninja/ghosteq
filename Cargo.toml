@@ -1,0 +1,13 @@
+[package]
+name = "spectrogram"
+version = "0.1.0"
+authors = ["Matt McPherrin <git@mcpherrin.ca>"]
+description="The start of a spectrogram rendering library"
+license="MIT"
+repository="https://github.com/mcpherrinm/spectrogram"
+keywords = ["dsp", "spectrogram", "fft", "fourier"]
+
+[dependencies]
+goertzel="0.2.0"
+hound = "3.2.0"
+image="*"
