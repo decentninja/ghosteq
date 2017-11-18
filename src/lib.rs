@@ -13,20 +13,21 @@ pub fn draw<P: AsRef<std::path::Path>>(wav: P, file_path: P) {
     let mut image_lines = 0;
 
     let window_type: WindowType = WindowType::Hanning;
-    let window_size: usize = 1024;
-    let step_size: usize = 512;
+    let window_size: usize = 2048;
+    let step_size: usize = 256;
     let mut stft = STFT::<f64>::new(window_type, window_size, step_size);
     let mut spectrogram_column: Vec<f64> = std::iter::repeat(0.).take(stft.output_size()).collect();
     let mut max = std::f64::MIN;
     let mut min = std::f64::MAX;
+    let half = spectrogram_column.len() / 2;
     for some_samples in (&samples[..]).chunks(step_size as usize) {
         stft.append_samples(some_samples);
         while stft.contains_enough_to_compute() {
-            stft.compute_column(&mut spectrogram_column[..]);
-            for bin in &spectrogram_column {
+            stft.compute_column(&mut spectrogram_column);
+            for bin in &spectrogram_column[..half] {
                 max = f64::max(max, *bin);
                 min = f64::min(min, *bin);
-                let val = (bin / 8. * std::u8::MAX as f64) as u8;   // TODO: log or something? Why 8?
+                let val = (stft::log10_positive(*bin) * std::u8::MAX as f64) as u8;
                 image_data.push(val);
             }
             image_lines += 1;
@@ -34,7 +35,7 @@ pub fn draw<P: AsRef<std::path::Path>>(wav: P, file_path: P) {
         }
     }
     println!("max: {}, min: {}", max, min);
-    let spectrogram: image::GrayImage = image::ImageBuffer::from_raw(step_size as u32, image_lines as u32, image_data).expect("Could not create image");
+    let spectrogram: image::GrayImage = image::ImageBuffer::from_raw(half as u32, image_lines as u32, image_data).expect("Could not create image");
     let rotated = image::imageops::rotate270(&spectrogram);
     rotated.save(file_path).expect("Could not write file");
 }
